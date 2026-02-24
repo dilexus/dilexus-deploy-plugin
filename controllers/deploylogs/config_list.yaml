@@ -1,0 +1,8 @@
+modelClass: Dilexus\Deploy\Models\DeployLog
+title: Deployment Logs
+list: ~/plugins/dilexus/deploy/models/deploylog/columns.yaml
+recordOnClick: false
+
+defaultSort:
+  column: created_at
+  direction: desc

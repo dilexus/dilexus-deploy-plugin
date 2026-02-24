@@ -1,0 +1,6 @@
+plugin:
+  name: "dilexus.deploy::lang.plugin.name"
+  description: "dilexus.deploy::lang.plugin.description"
+  author: Dilexus
+  icon: oc-icon-cloud-upload
+  homepage: ""

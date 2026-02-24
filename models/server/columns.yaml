@@ -1,0 +1,25 @@
+columns:
+  name:
+    label: Server Name
+    searchable: true
+
+  url:
+    label: URL
+    searchable: true
+
+  deploy_method:
+    label: Deploy Method
+
+  branch:
+    label: Branch
+
+  status:
+    label: Last Status
+
+  is_active:
+    label: Active
+    type: switch
+
+  updated_at:
+    label: Last Updated
+    type: datetime

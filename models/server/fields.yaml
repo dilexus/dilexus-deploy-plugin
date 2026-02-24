@@ -1,0 +1,176 @@
+fields:
+  # ─── Identity ─────────────────────────────────────────────────────────────
+
+  name:
+    label: Server Name
+    comment: A friendly label for this server (e.g. "Production", "Staging").
+    type: text
+    span: left
+    required: true
+
+  url:
+    label: Server URL
+    comment: The public URL of the server (e.g. https://myapp.com). Used as a unique identifier in CLI.
+    type: text
+    span: right
+    required: true
+
+  branch:
+    label: Git Branch
+    comment: The branch to pull when deploying (e.g. main, master, release).
+    type: text
+    default: main
+    span: left
+
+  is_active:
+    label: Active
+    comment: Only active servers appear in the deploy list.
+    type: switch
+    default: true
+    span: right
+
+  # ─── Deploy Method ────────────────────────────────────────────────────────
+
+  section_method:
+    label: Deploy Method
+    type: section
+    comment: Choose how deployments are triggered on this server.
+
+  deploy_method:
+    label: Method
+    type: dropdown
+    options:
+      webhook: "Webhook (HTTP POST)"
+      ssh: SSH
+    default: webhook
+    span: left
+
+  # ─── Webhook ──────────────────────────────────────────────────────────────
+
+  webhook_url:
+    label: Webhook URL
+    comment: The URL that will receive the POST request to trigger deployment.
+    type: text
+    span: left
+    trigger:
+      action: show
+      field: deploy_method
+      condition: value[webhook]
+
+  webhook_secret:
+    label: Webhook Secret
+    comment: Optional secret token sent as X-Deploy-Secret header.
+    type: text
+    span: right
+    trigger:
+      action: show
+      field: deploy_method
+      condition: value[webhook]
+
+  # ─── SSH ──────────────────────────────────────────────────────────────────
+
+  ssh_host:
+    label: SSH Host
+    comment: Hostname or IP address of the server.
+    type: text
+    span: left
+    trigger:
+      action: show
+      field: deploy_method
+      condition: value[ssh]
+
+  ssh_port:
+    label: SSH Port
+    type: number
+    default: 22
+    span: right
+    trigger:
+      action: show
+      field: deploy_method
+      condition: value[ssh]
+
+  ssh_user:
+    label: SSH User
+    type: text
+    span: left
+    trigger:
+      action: show
+      field: deploy_method
+      condition: value[ssh]
+
+  ssh_auth_method:
+    label: Authentication Method
+    type: dropdown
+    options:
+      password: Password
+      key: SSH Key File
+    default: key
+    span: right
+    trigger:
+      action: show
+      field: deploy_method
+      condition: value[ssh]
+
+  ssh_password:
+    label: SSH Password
+    type: sensitive
+    span: left
+    trigger:
+      action: show
+      field: ssh_auth_method
+      condition: value[password]
+
+  ssh_key_path:
+    label: SSH Key File Path
+    comment: "Absolute path to the private key on this server (e.g. /home/user/.ssh/id_rsa)."
+    type: text
+    span: left
+    trigger:
+      action: show
+      field: ssh_auth_method
+      condition: value[key]
+
+  deploy_path:
+    label: Deploy Path
+    comment: Absolute path to the application root on the remote server.
+    type: text
+    span: right
+    trigger:
+      action: show
+      field: deploy_method
+      condition: value[ssh]
+
+  # ─── Hooks ────────────────────────────────────────────────────────────────
+
+  section_hooks:
+    label: Deployment Hooks
+    type: section
+    comment: Shell commands to run before and after the git pull. One command per line.
+    trigger:
+      action: show
+      field: deploy_method
+      condition: value[ssh]
+
+  before_hooks:
+    label: Before Hooks
+    comment: "Commands to run before git pull (e.g. php artisan down)."
+    type: codeeditor
+    language: shell
+    span: left
+    size: small
+    trigger:
+      action: show
+      field: deploy_method
+      condition: value[ssh]
+
+  after_hooks:
+    label: After Hooks
+    comment: "Commands to run after git pull (e.g. composer install --no-dev, php artisan migrate --force, php artisan up)."
+    type: codeeditor
+    language: shell
+    span: right
+    size: small
+    trigger:
+      action: show
+      field: deploy_method
+      condition: value[ssh]
