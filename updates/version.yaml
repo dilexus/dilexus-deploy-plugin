@@ -1,4 +1,2 @@
 1.0.0:
   - First version of Dilexus Deploy Commander
-  - create_dilexus_deploy_servers
-  - create_dilexus_deploy_logs
