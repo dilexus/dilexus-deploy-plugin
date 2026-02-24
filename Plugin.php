@@ -9,10 +9,10 @@ class Plugin extends PluginBase
     public function pluginDetails(): array
     {
         return [
-            'name'        => 'Dilexus Deploy Commander',
+            'name' => 'Dilexus Deploy Commander',
             'description' => 'CLI commands to deploy plugins to remote servers via RainLab Deploy.',
-            'author'      => 'Dilexus',
-            'icon'        => 'icon-rocket',
+            'author' => 'Dilexus',
+            'icon' => 'icon-rocket',
         ];
     }
 

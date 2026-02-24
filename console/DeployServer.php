@@ -3,7 +3,6 @@
 use Illuminate\Console\Command;
 use RainLab\Deploy\Models\Server;
 use RainLab\Deploy\Classes\ArchiveBuilder;
-use ApplicationException;
 
 /**
  * deploy:run — CLI driver for the RainLab Deploy plugin workflow.
@@ -36,9 +35,9 @@ class DeployServer extends Command
 
     public function handle(): int
     {
-        $servers     = $this->resolveServers();
+        $servers = $this->resolveServers();
         $pluginCodes = $this->resolvePluginCodes();
-        $skipFiles   = $this->option('no-files');
+        $skipFiles = $this->option('no-files');
 
         if ($servers->isEmpty()) {
             $this->error('No matching server found.');
@@ -92,7 +91,7 @@ class DeployServer extends Command
 
     protected function buildDeploySteps(array $pluginCodes, bool $skipFiles): array
     {
-        $steps    = [];
+        $steps = [];
         $useFiles = [];
 
         if (!$skipFiles && !empty($pluginCodes)) {
@@ -101,28 +100,28 @@ class DeployServer extends Command
 
         if (!empty($useFiles)) {
             $steps[] = [
-                'label'  => 'Extracting Files',
+                'label' => 'Extracting Files',
                 'action' => 'extractFiles',
-                'files'  => $useFiles,
+                'files' => $useFiles,
             ];
         }
 
         $steps[] = [
-            'label'  => 'Clearing Cache',
+            'label' => 'Clearing Cache',
             'action' => 'transmitScript',
             'script' => 'clear_cache',
         ];
 
         $steps[] = [
-            'label'   => 'Migrating Database',
-            'action'  => 'transmitArtisan',
+            'label' => 'Migrating Database',
+            'action' => 'transmitArtisan',
             'artisan' => 'october:migrate',
         ];
 
         $steps[] = [
-            'label'  => 'Finishing Up',
+            'label' => 'Finishing Up',
             'action' => 'final',
-            'files'  => $useFiles,
+            'files' => $useFiles,
         ];
 
         return $steps;
@@ -137,89 +136,19 @@ class DeployServer extends Command
         $filePath = temp_path('deploy-' . md5(uniqid()) . '.arc');
 
         $steps[] = [
-            'label'  => "Building {$label} Archive",
+            'label' => "Building {$label} Archive",
             'action' => 'archiveBuilder',
-            'func'   => $func,
-            'args'   => array_merge([$filePath], $args),
+            'func' => $func,
+            'args' => array_merge([$filePath], $args),
         ];
 
         $steps[] = [
-            'label'  => "Uploading {$label} Archive",
+            'label' => "Uploading {$label} Archive",
             'action' => 'transmitFile',
-            'file'   => $filePath,
+            'file' => $filePath,
         ];
 
         return $filePath;
-    }
-
-    // ── Step executor ─────────────────────────────────────────────────────────
-    // Mirrors RainLab\Deploy\Widgets\Deployer::onExecuteStep
-
-    protected function runSteps(Server $server, array $steps): void
-    {
-        // fileMap accumulates local→server path pairs across transmitFile steps,
-        // exactly as deployer.js does in the browser (self.fileMap[step.file] = data.path).
-        $fileMap = [];
-
-        foreach ($steps as $step) {
-            $this->line("  → {$step['label']}");
-
-            switch ($step['action']) {
-
-                case 'archiveBuilder':
-                    // Mirrors: ArchiveBuilder::instance()->$func(...$args)
-                    ArchiveBuilder::instance()->{$step['func']}(...$step['args']);
-                    break;
-
-                case 'transmitFile':
-                    // Mirrors: $server->transmitFile($file) → return ['path' => decoded]
-                    $res = $server->transmitFile($step['file']);
-                    if (empty($res['path'])) {
-                        throw new \RuntimeException('transmitFile returned no path.');
-                    }
-                    $fileMap[$step['file']] = base64_decode($res['path']);
-                    break;
-
-                case 'extractFiles':
-                    // Mirrors: $server->transmitScript('extract_archive', ['files' => $fileMap])
-                    $res = $server->transmitScript('extract_archive', ['files' => $fileMap]);
-                    if (($res['status'] ?? null) !== 'ok') {
-                        throw new \RuntimeException('extract_archive failed: ' . ($res['error'] ?? 'unknown'));
-                    }
-                    break;
-
-                case 'transmitScript':
-                    $res = $server->transmitScript($step['script'], $step['vars'] ?? []);
-                    if (($res['status'] ?? null) !== 'ok') {
-                        throw new \RuntimeException("{$step['script']} failed: " . ($res['error'] ?? 'unknown'));
-                    }
-                    break;
-
-                case 'transmitArtisan':
-                    // Mirrors: $server->transmitArtisan($cmd), checks errCode, outputs result
-                    $res     = $server->transmitArtisan($step['artisan']);
-                    $errCode = $res['errCode'] ?? null;
-                    $output  = isset($res['output']) ? base64_decode($res['output']) : '';
-                    if ((int) $errCode !== 0) {
-                        throw new \RuntimeException("{$step['artisan']} failed:\n{$output}");
-                    }
-                    foreach (array_filter(explode("\n", trim($output))) as $line) {
-                        $this->line("     {$line}");
-                    }
-                    break;
-
-                case 'final':
-                    // Mirrors Deployer 'final': cleanup temp files, update last-deploy timestamp
-                    foreach ((array) ($step['files'] ?? []) as $file) {
-                        if ($file && file_exists($file)) {
-                            @unlink($file);
-                        }
-                    }
-                    $server->touchLastDeploy();
-                    $server->touchLastVersion();
-                    break;
-            }
-        }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -284,7 +213,77 @@ class DeployServer extends Command
         $selectedId = $matches[1] ?? null;
 
         return $selectedId
-            ? $servers->where('id', (int) $selectedId)->values()
-            : collect();
+        ? $servers->where('id', (int) $selectedId)->values()
+        : collect();
+    }
+
+    // ── Step executor ─────────────────────────────────────────────────────────
+    // Mirrors RainLab\Deploy\Widgets\Deployer::onExecuteStep
+
+    protected function runSteps(Server $server, array $steps): void
+    {
+        // fileMap accumulates local→server path pairs across transmitFile steps,
+        // exactly as deployer.js does in the browser (self.fileMap[step.file] = data.path).
+        $fileMap = [];
+
+        foreach ($steps as $step) {
+            $this->line("  → {$step['label']}");
+
+            switch ($step['action']) {
+
+                case 'archiveBuilder':
+                    // Mirrors: ArchiveBuilder::instance()->$func(...$args)
+                    ArchiveBuilder::instance()->{$step['func']}(...$step['args']);
+                    break;
+
+                case 'transmitFile':
+                    // Mirrors: $server->transmitFile($file) → return ['path' => decoded]
+                    $res = $server->transmitFile($step['file']);
+                    if (empty($res['path'])) {
+                        throw new \RuntimeException('transmitFile returned no path.');
+                    }
+                    $fileMap[$step['file']] = base64_decode($res['path']);
+                    break;
+
+                case 'extractFiles':
+                    // Mirrors: $server->transmitScript('extract_archive', ['files' => $fileMap])
+                    $res = $server->transmitScript('extract_archive', ['files' => $fileMap]);
+                    if (($res['status'] ?? null) !== 'ok') {
+                        throw new \RuntimeException('extract_archive failed: ' . ($res['error'] ?? 'unknown'));
+                    }
+                    break;
+
+                case 'transmitScript':
+                    $res = $server->transmitScript($step['script'], $step['vars'] ?? []);
+                    if (($res['status'] ?? null) !== 'ok') {
+                        throw new \RuntimeException("{$step['script']} failed: " . ($res['error'] ?? 'unknown'));
+                    }
+                    break;
+
+                case 'transmitArtisan':
+                    // Mirrors: $server->transmitArtisan($cmd), checks errCode, outputs result
+                    $res = $server->transmitArtisan($step['artisan']);
+                    $errCode = $res['errCode'] ?? null;
+                    $output = isset($res['output']) ? base64_decode($res['output']) : '';
+                    if ((int) $errCode !== 0) {
+                        throw new \RuntimeException("{$step['artisan']} failed:\n{$output}");
+                    }
+                    foreach (array_filter(explode("\n", trim($output))) as $line) {
+                        $this->line("     {$line}");
+                    }
+                    break;
+
+                case 'final':
+                    // Mirrors Deployer 'final': cleanup temp files, update last-deploy timestamp
+                    foreach ((array) ($step['files'] ?? []) as $file) {
+                        if ($file && file_exists($file)) {
+                            @unlink($file);
+                        }
+                    }
+                    $server->touchLastDeploy();
+                    $server->touchLastVersion();
+                    break;
+            }
+        }
     }
 }
