@@ -42,11 +42,11 @@ class ListServers extends Command
         if ($this->option('json')) {
             $this->line($servers->map(function (Server $s) {
                 return [
-                    'id'           => $s->id,
-                    'name'         => $s->server_name,
-                    'url'          => $s->endpoint_url,
-                    'status'       => $s->status_code,
-                    'last_deploy'  => $s->last_deploy_at?->toIso8601String(),
+                    'id' => $s->id,
+                    'name' => $s->server_name,
+                    'url' => $s->endpoint_url,
+                    'status' => $s->status_code,
+                    'last_deploy' => $s->last_deploy_at?->toIso8601String(),
                     'last_version' => $s->last_version,
                 ];
             })->toJson(JSON_PRETTY_PRINT));
@@ -55,9 +55,9 @@ class ListServers extends Command
 
         $rows = $servers->map(function (Server $s) {
             $statusLabel = match ($s->status_code) {
-                Server::STATUS_ACTIVE      => '<fg=green>active</>',
-                Server::STATUS_READY       => '<fg=cyan>ready</>',
-                Server::STATUS_LEGACY      => '<fg=yellow>legacy</>',
+                Server::STATUS_ACTIVE => '<fg=green>active</>',
+                Server::STATUS_READY => '<fg=cyan>ready</>',
+                Server::STATUS_LEGACY => '<fg=yellow>legacy</>',
                 Server::STATUS_UNREACHABLE => '<fg=red>unreachable</>',
                 default => $s->status_code,
             };
