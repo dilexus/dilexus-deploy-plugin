@@ -113,6 +113,18 @@ class DeployServer extends Command
         ];
 
         $steps[] = [
+            'label' => 'Clearing Config Cache',
+            'action' => 'transmitArtisan',
+            'artisan' => 'config:clear',
+        ];
+
+        $steps[] = [
+            'label' => 'Clearing Route Cache',
+            'action' => 'transmitArtisan',
+            'artisan' => 'route:clear',
+        ];
+
+        $steps[] = [
             'label' => 'Migrating Database',
             'action' => 'transmitArtisan',
             'artisan' => 'october:migrate',
